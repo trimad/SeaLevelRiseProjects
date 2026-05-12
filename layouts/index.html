@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="{{ .Site.Language.Locale | default "en-US" }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="An interactive static atlas built from archived tide gauge sea level data.">
+    <title>{{ .Site.Title }}</title>
+    <link rel="preload" href="{{ "data/sea-level-atlas.json" | relURL }}" as="fetch" crossorigin>
+    <link rel="preload" href="{{ "images/water.jpg" | relURL }}" as="image">
+    <link rel="stylesheet" href="{{ "css/site.css" | relURL }}">
+    <script defer src="{{ "js/app.js" | relURL }}"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="{{ "/" | relURL }}" aria-label="Tide Atlas home">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span>Tide Atlas</span>
+        </a>
+        <div class="stat-strip" aria-live="polite">
+          <span><strong id="stationCount">...</strong> gauges</span>
+          <span><strong id="yearSpan">...</strong></span>
+          <span><strong id="dataYear">...</strong></span>
+        </div>
+      </header>
+
+      <section class="visual-stage" aria-label="Sea level rise visualization">
+        <canvas id="atlasCanvas" aria-label="Interactive tide gauge atlas"></canvas>
+        <div id="tooltip" class="tooltip" hidden></div>
+
+        <aside class="control-panel" aria-label="Tide gauge controls">
+          <div class="station-heading">
+            <div>
+              <p class="eyebrow">Gauge</p>
+              <h1 id="stationName">Loading</h1>
+              <p id="stationPlace" class="muted">Preparing archived records</p>
+            </div>
+            <button id="playPause" class="icon-button" type="button" aria-label="Play timeline">
+              <span aria-hidden="true">▶</span>
+            </button>
+          </div>
+
+          <div class="metric-grid">
+            <div>
+              <span>Trend</span>
+              <strong id="trendValue">...</strong>
+            </div>
+            <div>
+              <span>Signal</span>
+              <strong id="signalValue">...</strong>
+            </div>
+            <div>
+              <span>Record</span>
+              <strong id="recordValue">...</strong>
+            </div>
+            <div>
+              <span>Coverage</span>
+              <strong id="coverageValue">...</strong>
+            </div>
+          </div>
+
+          <div class="timeline-control">
+            <div class="range-label">
+              <label for="yearRange">Year</label>
+              <output id="yearOutput" for="yearRange">...</output>
+            </div>
+            <input id="yearRange" type="range" min="1900" max="2018" value="2018">
+          </div>
+
+          <div class="selector-grid">
+            <input id="stationSearch" type="search" placeholder="Station or country" autocomplete="off">
+            <select id="stationSelect" aria-label="Select tide gauge"></select>
+          </div>
+
+          <div class="mode-tabs" role="tablist" aria-label="Visualization mode">
+            <button type="button" class="active" data-mode="atlas">Atlas</button>
+            <button type="button" data-mode="braid">Braid</button>
+            <button type="button" data-mode="scatter">Scatter</button>
+            <button type="button" data-mode="pulse">Pulse</button>
+            <button type="button" data-mode="rings">Rings</button>
+          </div>
+
+          <div class="legend-panel" aria-label="Color legend">
+            <div class="legend-title">
+              <span>Annual anomaly</span>
+              <small>millimeters from local baseline</small>
+            </div>
+            <div class="legend-ramp" aria-hidden="true"></div>
+            <div class="legend-scale">
+              <span>-250</span>
+              <span>0</span>
+              <span>+250 mm</span>
+            </div>
+            <div class="legend-items">
+              <span><i class="legend-dot below"></i>Below baseline</span>
+              <span><i class="legend-dot neutral"></i>Near baseline</span>
+              <span><i class="legend-dot above"></i>Above baseline</span>
+            </div>
+            <div class="legend-items trend-items">
+              <span><i class="legend-line falling"></i>Falling trend</span>
+              <span><i class="legend-line rising"></i>Rising trend</span>
+              <span><i class="legend-line missing"></i>No annual mean</span>
+            </div>
+          </div>
+
+          <div class="fingerprint">
+            <canvas id="ringCanvas" aria-label="Selected gauge tide fingerprint"></canvas>
+          </div>
+
+          <div class="station-list" id="stationList" aria-label="Featured gauges"></div>
+        </aside>
+      </section>
+
+      <footer class="source-band">
+        <span><strong>Data</strong> Archived local gauge CSVs from the old projects, transformed into annual means. Source: <a href="https://uhslc.soest.hawaii.edu/data/?fd">University of Hawaii Sea Level Center</a>.</span>
+        <span><strong>Baseline</strong> Each gauge is shown as millimeter anomaly from its first five valid annual means.</span>
+        <span><strong>Scope</strong> Relative local sea level through 2018; land motion and station datum shifts remain visible in the record.</span>
+      </footer>
+    </main>
+  </body>
+</html>

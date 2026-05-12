@@ -1,0 +1,30 @@
+# Tide Atlas To Do
+
+- [x] Build a Hugo static site from the archived sea level rise experiments.
+- [x] Add labeled axes to the Atlas view.
+- [x] Restore the world map in the Atlas view.
+- [x] Use meaningful anomaly and trend colors.
+- [x] Add a visual legend for color meaning.
+- [x] Add Pulse and Rings visualization modes.
+- [x] Remove decorative background wave lines.
+- [x] Credit the UH Sea Level Center fast-delivery data source.
+- [x] Improve layout behavior across narrow, tablet, and desktop windows.
+- [x] Update Braid view to color traces by annual anomaly and sort by active-year anomaly.
+- [ ] Add vertical land movement data from SONEL.
+  - Source: https://www.sonel.org/-Vertical-land-movements-.html?lang=en
+  - Target current solution: ULR20 GNSS vertical velocities.
+  - Use the vertical velocities table for station-level land motion rates and uncertainty.
+  - Match SONEL GNSS stations to tide gauge stations by nearby coordinates and station metadata.
+  - Add local relative sea level context: tide gauge trend, vertical land motion, and inferred ocean component.
+  - Visualize subsidence/uplift separately from sea level anomaly so the map distinguishes water rise from land motion.
+  - Add legend entries and source credit for SONEL vertical land movement data.
+- [ ] Add a p5.js 3D view of station movement.
+  - Represent each latitude/longitude station as a vector on a 3D mesh.
+  - Animate sea level rise data and vertical land movement data by moving each vector up or down along the y-axis.
+  - Provide controls for year, scale exaggeration, and toggling sea level versus land movement components.
+- [ ] Add a data build step that fetches or imports external source files reproducibly.
+- [ ] Add lightweight data validation for station coordinates, year ranges, missing values, and trend units.
+- [ ] Add a short methodology note explaining anomaly baseline, trend calculation, and station filtering.
+- [ ] Add URL state for selected mode, year, and station so views can be shared.
+- [ ] Add keyboard-accessible controls for mode switching, playback, and station navigation.
+- [ ] Add static export checks for the generated `public/` output.
