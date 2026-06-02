@@ -1,5 +1,5 @@
 baseURL: "/"
-locale: "en-US"
+languageCode: "en-US"
 title: "Tide Atlas"
 disableKinds:
   - taxonomy

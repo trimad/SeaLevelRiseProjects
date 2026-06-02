@@ -146,8 +146,10 @@ const defaultStation =
   stations.find((station) => station.name === "Brest") ??
   [...stations].sort((a, b) => b.validYears - a.validYears)[0];
 
+const deterministicGeneratedAt = `${Math.max(...stations.map((station) => station.lastYear))}-12-31T00:00:00.000Z`;
+
 const output = {
-  generatedAt: new Date().toISOString(),
+  generatedAt: deterministicGeneratedAt,
   generatedFrom: [
     path.relative(root, metadataPath).replaceAll("\\", "/"),
     path.relative(root, stationDataDir).replaceAll("\\", "/"),

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ .Site.Language.Locale | default "en-US" }}">
+<html lang="{{ .Site.LanguageCode | default "en-US" }}">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,7 +8,9 @@
     <link rel="preload" href="{{ "data/sea-level-atlas.json" | relURL }}" as="fetch" crossorigin>
     <link rel="preload" href="{{ "images/water.jpg" | relURL }}" as="image">
     <link rel="stylesheet" href="{{ "css/site.css" | relURL }}">
+    <script defer src="{{ "vendor/p5.js" | relURL }}"></script>
     <script defer src="{{ "js/app.js" | relURL }}"></script>
+    <script defer src="{{ "js/station-3d.js" | relURL }}"></script>
   </head>
   <body>
     <main class="app-shell">
@@ -26,6 +28,7 @@
 
       <section class="visual-stage" aria-label="Sea level rise visualization">
         <canvas id="atlasCanvas" aria-label="Interactive tide gauge atlas"></canvas>
+        <div id="station3dView" class="station-3d-view" aria-label="p5.js 3D station movement view"></div>
         <div id="tooltip" class="tooltip" hidden></div>
 
         <aside class="control-panel" aria-label="Tide gauge controls">
@@ -35,7 +38,7 @@
               <h1 id="stationName">Loading</h1>
               <p id="stationPlace" class="muted">Preparing archived records</p>
             </div>
-            <button id="playPause" class="icon-button" type="button" aria-label="Play timeline">
+            <button id="playPause" class="icon-button" type="button" aria-label="Play timeline" aria-pressed="false" aria-keyshortcuts="Space">
               <span aria-hidden="true">▶</span>
             </button>
           </div>
@@ -73,11 +76,12 @@
           </div>
 
           <div class="mode-tabs" role="tablist" aria-label="Visualization mode">
-            <button type="button" class="active" data-mode="atlas">Atlas</button>
-            <button type="button" data-mode="braid">Braid</button>
-            <button type="button" data-mode="scatter">Scatter</button>
-            <button type="button" data-mode="pulse">Pulse</button>
-            <button type="button" data-mode="rings">Rings</button>
+            <button type="button" role="tab" aria-selected="true" class="active" data-mode="atlas">Atlas</button>
+            <button type="button" role="tab" aria-selected="false" data-mode="braid">Braid</button>
+            <button type="button" role="tab" aria-selected="false" data-mode="scatter">Scatter</button>
+            <button type="button" role="tab" aria-selected="false" data-mode="pulse">Pulse</button>
+            <button type="button" role="tab" aria-selected="false" data-mode="rings">Rings</button>
+            <button type="button" role="tab" aria-selected="false" data-mode="globe">3D</button>
           </div>
 
           <div class="legend-panel" aria-label="Color legend">
@@ -107,8 +111,18 @@
             <canvas id="ringCanvas" aria-label="Selected gauge tide fingerprint"></canvas>
           </div>
 
-          <div class="station-list" id="stationList" aria-label="Featured gauges"></div>
+          <div class="station-list" id="stationList" role="list" aria-label="Featured gauges"></div>
         </aside>
+      </section>
+
+      <section class="methodology-note" aria-labelledby="methodologyTitle">
+        <div>
+          <p class="eyebrow">Methodology</p>
+          <h2 id="methodologyTitle">How to read the atlas</h2>
+        </div>
+        <p><strong>Annual anomaly baseline.</strong> Daily archived gauge records are grouped into annual means, then shown as millimeters from each station's first five valid annual means so local gauges can be compared without erasing their separate datums.</p>
+        <p><strong>Trend calculation.</strong> Station trends use an ordinary least-squares line through valid annual means and are reported in mm/year; short gaps remain visible as missing annual values rather than being interpolated.</p>
+        <p><strong>Station filtering.</strong> The current atlas keeps gauges with usable coordinates, chronological annual records, numeric values, and enough valid years to support trend and latest-anomaly summaries.</p>
       </section>
 
       <footer class="source-band">

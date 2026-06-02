@@ -141,13 +141,62 @@ button {
   isolation: isolate;
 }
 
-#atlasCanvas {
+#atlasCanvas,
+.station-3d-view {
+  grid-column: 1;
+  grid-row: 1;
   width: 100%;
   max-width: 100%;
   height: 100%;
   min-height: clamp(480px, calc(100vh - 116px), 780px);
+}
+
+#atlasCanvas {
   display: block;
   cursor: crosshair;
+}
+
+.station-3d-view {
+  display: none;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 50%, rgba(93, 216, 193, 0.12), rgba(12, 17, 19, 0.96) 68%);
+}
+
+body[data-mode="globe"] #atlasCanvas {
+  visibility: hidden;
+}
+
+body[data-mode="globe"] .station-3d-view {
+  display: block;
+}
+
+.station-3d-canvas,
+.station-3d-canvas canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.station-3d-controls {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 1;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(16, 18, 17, 0.78);
+  backdrop-filter: blur(12px);
+}
+
+.station-3d-controls label {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .control-panel {
@@ -494,6 +543,32 @@ input[type="range"] {
   color: var(--low-soft);
 }
 
+.methodology-note {
+  max-width: 100vw;
+  display: grid;
+  grid-template-columns: minmax(180px, 0.6fr) repeat(3, minmax(180px, 1fr));
+  gap: 18px;
+  padding: 22px clamp(16px, 4vw, 36px);
+  color: var(--muted);
+  background: rgba(16, 18, 17, 0.8);
+  border-top: 1px solid var(--line);
+}
+
+.methodology-note h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 22px;
+}
+
+.methodology-note p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.methodology-note strong {
+  color: var(--ink);
+}
+
 .source-band {
   max-width: 100vw;
   overflow-wrap: anywhere;
@@ -603,6 +678,10 @@ input[type="range"] {
 
   .station-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .methodology-note {
+    grid-template-columns: 1fr;
   }
 
   .source-band {

@@ -62,7 +62,7 @@ const ANOMALY_STOPS = [
 ];
 
 const TREND_LIMIT_MM_YEAR = 8;
-const MODES = new Set(["atlas", "braid", "scatter", "pulse", "rings"]);
+const MODES = new Set(["atlas", "braid", "scatter", "pulse", "rings", "globe"]);
 
 const LAND_POLYGONS = [
   [
@@ -209,15 +209,18 @@ Promise.all([
   });
 
 function init(data, landPolygons) {
+  const initial = getInitialStateFromUrl(data);
   state.data = data;
   state.land = Array.isArray(landPolygons) && landPolygons.length > 0 ? landPolygons : LAND_POLYGONS;
   state.stations = data.stations.map(enrichStation);
   state.scatterStats = buildScatterStats(state.stations);
-  state.mode = getInitialMode();
-  state.year = data.lastYear;
+  state.mode = initial.mode;
+  state.year = initial.year;
   state.filteredStations = state.stations;
   state.selected =
-    state.stations.find((station) => station.id === data.defaultStationId) ?? state.stations[0];
+    state.stations.find((station) => station.id === initial.stationId) ??
+    state.stations.find((station) => station.id === data.defaultStationId) ??
+    state.stations[0];
 
   ui.stationCount.textContent = String(data.stationCount);
   ui.yearSpan.textContent = `${data.firstYear}-${data.lastYear}`;
@@ -232,6 +235,7 @@ function init(data, landPolygons) {
   updateModeButtons();
   resizeAll();
   updatePanel();
+  syncUrlState();
   requestAnimationFrame(loop);
 }
 
@@ -282,6 +286,7 @@ function attachEvents() {
     state.playing = false;
     updatePlayButton();
     updatePanel();
+    syncUrlState();
   });
 
   ui.stationSelect.addEventListener("change", () => {
@@ -303,7 +308,9 @@ function attachEvents() {
     button.addEventListener("click", () => {
       state.mode = button.dataset.mode;
       updateModeButtons();
+      syncUrlState();
     });
+    button.addEventListener("keydown", handleModeTabKeydown);
   });
 
   ui.playPause.addEventListener("click", () => {
@@ -311,6 +318,8 @@ function attachEvents() {
     state.lastTick = 0;
     updatePlayButton();
   });
+
+  ui.stationList.addEventListener("keydown", handleStationListKeydown);
 
   canvas.addEventListener("pointermove", handlePointerMove);
   canvas.addEventListener("pointerleave", () => {
@@ -322,14 +331,71 @@ function attachEvents() {
   });
 }
 
-function getInitialMode() {
-  const mode = new URLSearchParams(window.location.search).get("mode");
-  return MODES.has(mode) ? mode : "atlas";
+function getInitialStateFromUrl(data) {
+  const searchParams = new URLSearchParams(window.location.search);
+  const mode = searchParams.get("mode");
+  const year = Number(searchParams.get("year"));
+  const stationId = searchParams.get("station");
+
+  return {
+    mode: MODES.has(mode) ? mode : "atlas",
+    year: Number.isInteger(year) && year >= data.firstYear && year <= data.lastYear ? year : data.lastYear,
+    stationId,
+  };
+}
+
+function syncUrlState() {
+  if (!state.data || !state.selected) return;
+  const url = new URL(window.location.href);
+  url.searchParams.set("mode", state.mode);
+  url.searchParams.set("year", String(state.year));
+  url.searchParams.set("station", state.selected.id);
+  history.replaceState(null, "", url);
+}
+
+function handleModeTabKeydown(event) {
+  if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
+  event.preventDefault();
+  const currentIndex = ui.modeButtons.indexOf(event.currentTarget);
+  const lastIndex = ui.modeButtons.length - 1;
+  let nextIndex = currentIndex;
+
+  if (event.key === "ArrowRight") nextIndex = currentIndex >= lastIndex ? 0 : currentIndex + 1;
+  else if (event.key === "ArrowLeft") nextIndex = currentIndex <= 0 ? lastIndex : currentIndex - 1;
+  else if (event.key === "Home") nextIndex = 0;
+  else if (event.key === "End") nextIndex = lastIndex;
+
+  const nextButton = ui.modeButtons[nextIndex];
+  if (!nextButton) return;
+  nextButton.focus();
+  nextButton.click();
+}
+
+function handleStationListKeydown(event) {
+  if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+  const buttons = [...ui.stationList.querySelectorAll("button")];
+  if (buttons.length === 0) return;
+
+  event.preventDefault();
+  const currentIndex = Math.max(0, buttons.indexOf(document.activeElement));
+  const lastIndex = buttons.length - 1;
+  let nextIndex = currentIndex;
+
+  if (event.key === "ArrowDown") nextIndex = currentIndex >= lastIndex ? 0 : currentIndex + 1;
+  else if (event.key === "ArrowUp") nextIndex = currentIndex <= 0 ? lastIndex : currentIndex - 1;
+  else if (event.key === "Home") nextIndex = 0;
+  else if (event.key === "End") nextIndex = lastIndex;
+
+  buttons[nextIndex]?.focus();
 }
 
 function updateModeButtons() {
+  document.body.dataset.mode = state.mode;
   ui.modeButtons.forEach((button) => {
-    button.classList.toggle("active", button.dataset.mode === state.mode);
+    const selected = button.dataset.mode === state.mode;
+    button.classList.toggle("active", selected);
+    button.setAttribute("aria-selected", selected ? "true" : "false");
+    button.tabIndex = selected ? 0 : -1;
   });
 }
 
@@ -370,6 +436,7 @@ function populateFeatured() {
     const trendClass = (station.trendMmYr ?? 0) >= 0 ? "trend-up" : "trend-down";
     button.type = "button";
     button.dataset.id = station.id;
+    button.setAttribute("role", "listitem");
     button.innerHTML = `
       <span><b>${escapeHtml(station.name)}</b><span>${escapeHtml(station.country)}</span></span>
       <strong class="${trendClass}">${formatTrend(station.trendMmYr)}</strong>
@@ -384,6 +451,7 @@ function selectStation(station) {
   ui.stationSelect.value = station.id;
   updatePanel();
   drawRing();
+  syncUrlState();
 }
 
 function updatePanel() {
@@ -398,7 +466,9 @@ function updatePanel() {
   ui.coverageValue.textContent = `${station.validYears} years`;
 
   [...ui.stationList.querySelectorAll("button")].forEach((button) => {
-    button.classList.toggle("active", button.dataset.id === station.id);
+    const selected = button.dataset.id === station.id;
+    button.classList.toggle("active", selected);
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
   });
 
   drawRing();
@@ -407,6 +477,7 @@ function updatePanel() {
 function updatePlayButton() {
   ui.playPause.querySelector("span").textContent = state.playing ? "Ⅱ" : "▶";
   ui.playPause.setAttribute("aria-label", state.playing ? "Pause timeline" : "Play timeline");
+  ui.playPause.setAttribute("aria-pressed", state.playing ? "true" : "false");
 }
 
 function loop(timestamp) {
@@ -415,6 +486,7 @@ function loop(timestamp) {
     state.year = state.year >= state.data.lastYear ? state.data.firstYear : state.year + 1;
     ui.yearRange.value = state.year;
     updatePanel();
+    syncUrlState();
   }
 
   drawMain(timestamp);
@@ -427,6 +499,7 @@ function drawMain(timestamp = 0) {
   ctx.clearRect(0, 0, layoutWidth, height);
   drawBackdrop(layoutWidth, height);
 
+  if (state.mode === "globe") return;
   if (state.mode === "braid") drawBraid(renderWidth, height);
   else if (state.mode === "scatter") drawTrendVolatility(renderWidth, height);
   else if (state.mode === "pulse") drawPulseMap(renderWidth, height, timestamp);
